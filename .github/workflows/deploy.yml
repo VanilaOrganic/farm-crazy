@@ -1,0 +1,52 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Trigger on push to main branch (you can change this to your preferred branch)
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js (if you're using JavaScript/Node.js)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18" # Change this to the version you're using
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install  # Or use `yarn install` if you're using Yarn
+
+      # Step 4: Run linter (this will cause the pipeline to fail if linting errors occur)
+      - name: Run linter
+        run: |
+          npm run lint  # Replace with your linter command (eslint, prettier, etc.)
+        continue-on-error: false # Ensures that the pipeline fails if linter fails
+
+      # Step 5: Run tests (this will cause the pipeline to fail if tests fail)
+      - name: Run tests
+        run: |
+          npm test  # Replace with your test command (jest, mocha, etc.)
+        continue-on-error: false # Ensures that the pipeline fails if tests fail
+
+      # Step 6: Build the project (Add your build step here)
+      - name: Build project
+        run: |
+          npm run build
+        continue-on-error: false # Ensures that the pipeline fails if build fails
+
+      # Step 7: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # The branch where the website will be deployed
+          folder: ./build # Folder to deploy (can change to `./build` or `./dist` depending on your build output)
+          token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided GitHub token to authenticate deployment
