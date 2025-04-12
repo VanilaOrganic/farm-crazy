@@ -49,4 +49,4 @@ jobs:
         with:
           branch: gh-pages # The branch where the website will be deployed
           folder: ./dist # Folder to deploy (can change to `./build` or `./dist` depending on your build output)
-          token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided GitHub token to authenticate deployment
+          token: ${{ secrets.DEPLOY_TOKEN }} # Automatically provided GitHub token to authenticate deployment
