@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { ThreeElements, useFrame } from "@react-three/fiber"
-import { useMemo, useRef, useState } from "react"
+import { useMemo, useRef } from "react"
 import { useLoader } from '@react-three/fiber'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js'
@@ -17,7 +17,7 @@ export function UIIA(props: ThreeElements['mesh']) {
     mixer.clipAction(clip).play();
   });
 
-  useFrame((a, delta) => {
+  useFrame((_, delta) => {
     mixer.update(delta);
   })
 
