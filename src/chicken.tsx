@@ -10,7 +10,7 @@ export function Chicken(props: ThreeElements['group']) {
   const chickenRef = useRef<THREE.Mesh>(null!)
   const boxRef = useRef<THREE.Mesh>(null!)
 
-  const gltf = useLoader(GLTFLoader, '/chicken/scene.gltf')
+  const gltf = useLoader(GLTFLoader, "chicken/scene.gltf");
   const clonedScene = useMemo(() => clone(gltf.scene), [gltf.scene])
 
   useFrame(() => {
