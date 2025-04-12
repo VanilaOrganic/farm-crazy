@@ -8,7 +8,7 @@ import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js'
 export function UIIA(props: ThreeElements['mesh']) {
   const meshRef = useRef<THREE.Mesh>(null!)
 
-  const gltf = useLoader(GLTFLoader, '/uiia/scene.gltf')
+  const gltf = useLoader(GLTFLoader, "uiia/scene.gltf");
 
   const clonedScene = useMemo(() => clone(gltf.scene), [gltf.scene])
 
