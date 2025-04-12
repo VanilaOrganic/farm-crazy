@@ -1,0 +1,27 @@
+#!/bin/sh
+
+echo "Running Prettier..."
+npx prettier --write .
+
+echo "Running ESLint..."
+npx eslint . --fix
+if [ $? -ne 0 ]; then
+  echo "⛔️ Running ESLint fail 💩"
+  exit 1
+fi
+
+echo "Running TypeScript..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "⛔️ Running TypeScript fail 💩"
+  exit 1
+fi
+
+echo "Running Test..."
+npm run test
+if [ $? -ne 0 ]; then
+  echo "⛔️ Running tests fail 💩"
+  exit 1
+fi
+
+echo "✅ Pre-commit complete 💪"
