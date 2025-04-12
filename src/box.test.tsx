@@ -1,3 +1,3 @@
-test("renders welcome message", () => {
-  expect(true).toBe(true);
-});
+test('renders welcome message', () => {
+  expect(true).toBe(true)
+})
