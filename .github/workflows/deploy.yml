@@ -5,6 +5,10 @@ on:
     branches:
       - main # Trigger on push to main branch (you can change this to your preferred branch)
 
+  pull_request:
+    branches:
+      - main # Trigger on pull request to main branch (or your preferred branch)
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
