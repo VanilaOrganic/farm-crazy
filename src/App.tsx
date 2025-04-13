@@ -1,15 +1,12 @@
 import { Canvas } from '@react-three/fiber'
-import { Chicken } from './chicken'
+import { Chicken } from './Chicken'
 import { OrbitControls, useTexture } from '@react-three/drei'
+import { PlaneAttributes } from '../constants/plane'
+import { Cow } from './Cow'
+import { Sheep } from './Sheep'
 
 function App() {
-  const planeAtrributes = {
-    width: 20,
-    height: 20,
-    depth: 0.5,
-  }
-
-  const chickenCount = 10
+  const chickenSize = 10
 
   const Plane = () => {
     const [colorMap, normalMap, roughnessMap] = useTexture([
@@ -22,9 +19,9 @@ function App() {
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <boxGeometry
           args={[
-            planeAtrributes.width,
-            planeAtrributes.height,
-            planeAtrributes.depth,
+            PlaneAttributes.width,
+            PlaneAttributes.height,
+            PlaneAttributes.depth,
           ]}
         />
         <meshStandardMaterial
@@ -59,17 +56,15 @@ function App() {
       {/* Plane at the base */}
       <Plane />
       {/* Chicken always on top of the plane */}
-      {Array.from({ length: chickenCount }, (_, i) => (
-        <Chicken
-          key={i}
-          position={[
-            Math.random() * planeAtrributes.width - planeAtrributes.width / 2,
-            planeAtrributes.depth * 2,
-            Math.random() * planeAtrributes.height - planeAtrributes.height / 2,
-          ]}
-        />
+      {Array.from({ length: chickenSize }, (_, i) => (
+        <Chicken key={'chicken ' + i} scale={0.1} />
       ))}
-      {/* Keep chicken slightly above the plane */}
+      {Array.from({ length: chickenSize }, (_, i) => (
+        <Cow key={'cow ' + i} scale={0.1} />
+      ))}
+      {Array.from({ length: chickenSize }, (_, i) => (
+        <Sheep key={'sheep ' + i} scale={0.1} />
+      ))}
     </Canvas>
   )
 }
