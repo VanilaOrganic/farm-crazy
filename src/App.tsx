@@ -1,12 +1,18 @@
 import { Canvas } from '@react-three/fiber'
-import { Chicken } from './Chicken'
+import { Animal, AnimalRef } from './Animal'
 import { OrbitControls, useTexture } from '@react-three/drei'
 import { PlaneAttributes } from '../constants/plane'
-import { Cow } from './Cow'
-import { Sheep } from './Sheep'
+import React, { useRef } from 'react'
+import * as THREE from 'three'
 
 function App() {
   const chickenSize = 10
+  const chickenRefs = useRef<React.RefObject<AnimalRef | null>[]>([])
+  if (chickenRefs.current.length === 0) {
+    chickenRefs.current = Array.from({ length: chickenSize }, () =>
+      React.createRef<AnimalRef>()
+    )
+  }
 
   const Plane = () => {
     const [colorMap, normalMap, roughnessMap] = useTexture([
@@ -35,37 +41,53 @@ function App() {
   }
 
   return (
-    <Canvas
-      style={{
-        width: '100vw',
-        height: '100vh',
-      }}
-      camera={{ position: [10, 10, 0], fov: 75 }}
-    >
-      <ambientLight intensity={Math.PI / 2} />
-      <spotLight
-        position={[10, 10, 10]}
-        angle={0.15}
-        penumbra={1}
-        decay={0}
-        intensity={Math.PI}
-      />
-      <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-      {/* Adding the OrbitControls */}
-      <OrbitControls />
-      {/* Plane at the base */}
-      <Plane />
-      {/* Chicken always on top of the plane */}
-      {Array.from({ length: chickenSize }, (_, i) => (
-        <Chicken key={'chicken ' + i} scale={0.1} />
-      ))}
-      {Array.from({ length: chickenSize }, (_, i) => (
-        <Cow key={'cow ' + i} scale={0.1} />
-      ))}
-      {Array.from({ length: chickenSize }, (_, i) => (
-        <Sheep key={'sheep ' + i} scale={0.1} />
-      ))}
-    </Canvas>
+    <>
+      <button
+        onClick={() =>
+          chickenRefs.current.forEach((ref) => {
+            ref.current?.walkToDirection(new THREE.Vector3(1, 0, 0))
+          })
+        }
+      >
+        Make chicken 0 walk east
+      </button>
+      <Canvas
+        style={{
+          width: '100vw',
+          height: '100vh',
+        }}
+        camera={{ position: [10, 10, 0], fov: 75 }}
+      >
+        <ambientLight intensity={Math.PI / 2} />
+        <spotLight
+          position={[10, 10, 10]}
+          angle={0.15}
+          penumbra={1}
+          decay={0}
+          intensity={Math.PI}
+        />
+        <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+        {/* Adding the OrbitControls */}
+        <OrbitControls />
+        {/* Plane at the base */}
+        <Plane />
+        {/* Chicken always on top of the plane */}
+        {Array.from({ length: chickenSize }, (_, i) => (
+          <Animal
+            key={'chicken ' + i}
+            ref={chickenRefs.current[i]}
+            scale={0.1}
+            gltfPath="chicken/scene.gltf"
+          />
+        ))}
+        {Array.from({ length: chickenSize }, (_, i) => (
+          <Animal key={'cow ' + i} scale={0.1} gltfPath="cow/scene.gltf" />
+        ))}
+        {Array.from({ length: chickenSize }, (_, i) => (
+          <Animal key={'sheep ' + i} scale={0.1} gltfPath="sheep/scene.gltf" />
+        ))}
+      </Canvas>
+    </>
   )
 }
 
