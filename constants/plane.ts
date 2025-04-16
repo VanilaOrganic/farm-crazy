@@ -3,3 +3,5 @@ export const PlaneAttributes = {
   height: 20,
   depth: 1,
 }
+
+export const MODEL_OFFSET = 0.0001
