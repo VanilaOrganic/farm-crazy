@@ -1,12 +1,5 @@
 import { ThreeElements, useFrame, useLoader } from '@react-three/fiber'
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js'
@@ -15,6 +8,7 @@ import { MODEL_OFFSET, PlaneAttributes } from '../constants/plane'
 
 interface AnimalProps {
   gltfPath: string
+  scale?: number
 }
 
 export interface AnimalRef {
@@ -26,34 +20,25 @@ export const Animal = forwardRef<
   AnimalProps & ThreeElements['mesh']
 >((props, ref) => {
   const animalRef = useRef<THREE.Mesh>(null!)
-  const [position, setPosition] = useState<THREE.Vector3>(
-    new THREE.Vector3(0, 0, 0)
-  )
-  const [isMoving, setIsMoving] = useState(false)
-  const [randomMovement, setRandomMovement] = useState({
-    vector: new THREE.Vector3(0, 0, 0),
+  const movementRef = useRef({
+    nvector: new THREE.Vector3(0, 0, 0),
     angle: 0,
     speed: 0,
     distance: 0,
     moved: 0,
   })
 
-  // ✅ Expose custom movement control
+  // ✅ Expose custom movement control (override movement)
   useImperativeHandle(ref, () => ({
     walkToDirection(dir: THREE.Vector3) {
       const direction = dir.clone().normalize()
-      const angleY = Math.atan2(direction.x, direction.z)
-      const speed = Math.random() * 0.05 + 0.01
-      const distance = Math.random() * 3 + 2
-
-      setRandomMovement({
-        vector: direction,
-        angle: angleY,
-        speed,
-        distance,
+      movementRef.current = {
+        nvector: direction,
+        angle: Math.atan2(direction.x, direction.z),
+        speed: Math.random() * 0.05 + 0.01,
+        distance: Math.random() * 3 + 2,
         moved: 0,
-      })
-      setIsMoving(true)
+      }
     },
   }))
 
@@ -63,24 +48,22 @@ export const Animal = forwardRef<
 
     const scheduleMovement = () => {
       const randomDelay = Math.random() * 2000 + 1000
-
       timeout = setTimeout(() => {
-        if (!isMoving) {
-          const randomX = Math.random() * 2 - 1
-          const randomZ = Math.random() * 2 - 1
-          const direction = new THREE.Vector3(randomX, 0, randomZ).normalize()
-          const angleY = Math.atan2(direction.x, direction.z)
-          const speed = Math.random() * 0.05 + 0.01
-          const distance = Math.random() * 3 + 2
+        // If not moving, then generate random movement
+        if (movementRef.current.moved >= movementRef.current.distance) {
+          const direction = new THREE.Vector3(
+            Math.random() * 2 - 1,
+            0,
+            Math.random() * 2 - 1
+          ).normalize()
 
-          setRandomMovement({
-            vector: direction,
-            angle: angleY,
-            speed,
-            distance,
+          movementRef.current = {
+            nvector: direction,
+            angle: Math.atan2(direction.x, direction.z),
+            speed: Math.random() * 0.05 + 0.01,
+            distance: Math.random() * 3 + 2,
             moved: 0,
-          })
-          setIsMoving(true)
+          }
         }
 
         scheduleMovement()
@@ -89,45 +72,38 @@ export const Animal = forwardRef<
 
     scheduleMovement()
     return () => clearTimeout(timeout)
-  }, [isMoving])
+  }, [])
 
   // Load model
   const gltf = useLoader(GLTFLoader, props.gltfPath)
-  const clonedScene = useMemo(() => clone(gltf.scene), [gltf.scene])
+  const clonedScene = clone(gltf.scene)
 
-  useEffect(() => {
-    const box = new THREE.Box3().setFromObject(animalRef.current)
-    setPosition(
-      getRandomPositionWithinPlane(Math.abs(box.min.y) + MODEL_OFFSET)
-    )
-  }, [])
+  // Init pos
+  const box = new THREE.Box3().setFromObject(clonedScene)
+  const initialPos = getRandomPositionWithinPlane(
+    Math.abs(box.min.y) * (props.scale ?? 1) + MODEL_OFFSET
+  )
+  clonedScene.position.copy(initialPos)
 
   // Frame update
   useFrame(() => {
-    if (isMoving) {
-      const moveStep = randomMovement.vector
+    const shouldMove = movementRef.current.moved < movementRef.current.distance
+
+    if (shouldMove) {
+      const moveStep = movementRef.current.nvector
         .clone()
-        .multiplyScalar(randomMovement.speed)
+        .multiplyScalar(movementRef.current.speed)
       animalRef.current.position.add(moveStep)
+      animalRef.current.rotation.y = movementRef.current.angle
+      movementRef.current.moved += moveStep.length()
 
-      const newMoved = randomMovement.moved + moveStep.length()
-      animalRef.current.rotation.y = randomMovement.angle
-
-      if (newMoved >= randomMovement.distance) {
-        setIsMoving(false)
-        setRandomMovement((prev) => ({ ...prev, moved: 0 }))
-      } else {
-        setRandomMovement((prev) => ({ ...prev, moved: newMoved }))
-      }
+      // Stay within plane
+      const pos = animalRef.current.position
+      const halfWidth = PlaneAttributes.width / 2
+      const halfHeight = PlaneAttributes.height / 2
+      pos.x = THREE.MathUtils.clamp(pos.x, -halfWidth, halfWidth)
+      pos.z = THREE.MathUtils.clamp(pos.z, -halfHeight, halfHeight)
     }
-
-    const pos = animalRef.current.position
-    const halfWidth = PlaneAttributes.width / 2
-    const halfHeight = PlaneAttributes.height / 2
-    if (pos.x > halfWidth) pos.x = halfWidth
-    if (pos.x < -halfWidth) pos.x = -halfWidth
-    if (pos.z > halfHeight) pos.z = halfHeight
-    if (pos.z < -halfHeight) pos.z = -halfHeight
   })
 
   return (
@@ -135,7 +111,6 @@ export const Animal = forwardRef<
       <primitive
         object={clonedScene}
         ref={animalRef}
-        position={position}
         onClick={() => {
           animalRef.current.position.y += 1
           animalRef.current.rotation.y += Math.PI * 0.5
